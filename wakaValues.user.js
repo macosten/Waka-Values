@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name         Waka Pricer
-// @version      1.01
-// @description  Automatically label NC items with waka value. Visit ~/waka to refresh values.
+// @version      1.02
+// @description  Automatically label NC items with waka value or owls value. Visit ~/waka or ~/owls to refresh values.
 // @author       friendly-trenchcoat
-// @match        http://www.neopets.com/~waka
-// @match        http://www.neopets.com/inventory.phtml*
-// @match        http://www.neopets.com/closet.phtml*
-// @match        http://www.neopets.com/safetydeposit.phtml*
-// @match        http://www.neopets.com/gallery/index.phtml*
+// @include      http*://www.neopets.com/~waka
+// @include      http*://www.neopets.com/~owls
+// @match        http*://www.neopets.com/inventory.phtml*
+// @match        http*://www.neopets.com/closet.phtml*
+// @match        http*://www.neopets.com/safetydeposit.phtml*
+// @match        http*://www.neopets.com/gallery/index.phtml*
 // @match        http*://items.jellyneo.net/*
 // @match        http*://www.jellyneo.net/?go=*
 // @match        http*://impress.openneo.net/*
@@ -16,11 +17,10 @@
 // ==/UserScript==
 
 /**
- * Waka is a community resource that tracks the approximate value of NC items, based on real-world trades.
+ * Waka was a community resource that tracks the approximate value of NC items, based on real-world trades.
+ * In August 2021, updates to Waka ceased, and Owls, a new NC value guide petpage, was created.
  *
- * The Waka Team aims to maintain the accuracy of the guide as fully as possible, but please remember values are
- * often changing and with certain difficult-to-find or popular items it doesn't hurt to make a value check!
- *
+ * Please not that these prices are only guidelines, not law, and not all items will have prices!
  */
 
 (function () {
@@ -28,8 +28,9 @@
     console.log('Waka Pricer');
 
 
-    // Store & Fetch waka data
-    if (document.URL.includes("~waka")) {
+    // Store & Fetch ~waka data...
+    const url = document.URL.toLowerCase();
+    if (url.includes("~waka")) {
         let items_arr = document.getElementsByClassName("itemList")[0].innerText.split('\n');
         let items = items_arr.reduce((o, item) => {
             let split = item.split(' ~ ');
@@ -38,6 +39,20 @@
         }, {});
         GM_setValue("NEOPETS_WAKA", JSON.stringify(items));
         console.log('Waka values updated.');
+    }
+    // ...or ~owls data.
+    else if (url.includes("~owls")) {
+        let items_arr = document.getElementsByClassName("content-box")[0].innerText.split('\n');
+        let items = items_arr.reduce((o, item) => {
+            let split = item.split('~');
+            split[0] = split[0].trim(); // Most (but not quite all) items have trailing spaces
+            if (split.length === 2 && split[1] !== "00 - 00") {
+                o[split[0]] = split[1];
+            }
+            return o;
+        }, {});
+        GM_setValue("NEOPETS_WAKA", JSON.stringify(items));
+        console.log('Owls values updated.');
     }
     else {
         var WAKA;
@@ -196,3 +211,4 @@
         document.body.appendChild(css);
     }
 })();
+
